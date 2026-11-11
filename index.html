@@ -54,9 +54,13 @@ body{margin:0;min-height:100vh;background:radial-gradient(ellipse at center top,
 
 /* Updated four-option legend hides the three-option legend embedded in the original poster. */
 .poster{container-type:inline-size}
-.legend-update{position:absolute;z-index:7;left:2.6%;width:94.8%;top:80.40%;height:5.35%;display:flex;align-items:center;justify-content:space-evenly;gap:.6%;padding:0.55% 0.8%;border:2px solid #e4f6ff;border-radius:100px;background:linear-gradient(180deg,#b9eaff 0%,#439bdd 15%,#0b3995 50%,#153c91 79%,#80bfea 100%);box-shadow:0 0 0 2px #1a57ae,0 3px 9px #001d62b0;pointer-events:none;line-height:1.1}
-.legend-chip{height:85%;min-width:0;display:flex;align-items:center;justify-content:center;gap:2.5%;padding:0 .4%;white-space:nowrap;overflow:hidden;border:1.5px solid #fff;border-radius:100px;color:#082452;text-shadow:0 1px 1px #fff8;font-size:clamp(6.4px,1.53cqw,15px);font-weight:950;letter-spacing:-.3px;box-shadow:inset 0 2px 4px #ffffffbf,0 2px 2px #05234d60}
+.legend-update{position:absolute;z-index:7;left:2.6%;width:94.8%;top:79.95%;height:6.35%;display:flex;align-items:center;justify-content:space-evenly;gap:.8%;padding:0.55% 0.85%;border:2px solid #e4f6ff;border-radius:100px;background:linear-gradient(180deg,#b9eaff 0%,#439bdd 15%,#0b3995 50%,#153c91 79%,#80bfea 100%);box-shadow:0 0 0 2px #1a57ae,0 3px 9px #001d62b0;pointer-events:none}
+.legend-chip{height:87%;min-width:0;display:flex;align-items:center;justify-content:center;gap:3.2%;padding:0 .65%;overflow:hidden;border:1.5px solid #fff;border-radius:100px;color:#082452;text-shadow:0 1px 1px #fff8;font-weight:950;letter-spacing:-.2px;box-shadow:inset 0 2px 4px #ffffffbf,0 2px 2px #05234d60}
 .legend-chip i{width:1.65cqw;height:1.65cqw;max-width:16px;max-height:16px;min-width:5px;min-height:5px;flex-shrink:0;border:1px solid #fffd;box-shadow:0 1px 2px #0004;border-radius:50%}
+.legend-lines{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.02}
+.legend-name,.legend-count{display:block;white-space:nowrap}
+.legend-name{font-size:clamp(7.6px,1.7cqw,17px)}
+.legend-count{font-size:clamp(7.2px,1.42cqw,14px);margin-top:1px}
 .option-yellow{flex:1.35;background:linear-gradient(#fff6b1,#ffd84f)}.option-yellow i{background:#f6bc02}
 .option-pink{flex:1.03;background:linear-gradient(#ffe3ec,#ffafbc)}.option-pink i{background:#ec486b}
 .option-blue{flex:.87;background:linear-gradient(#e5f7ff,#93caff)}.option-blue i{background:#308fef}
@@ -77,10 +81,10 @@ body{margin:0;min-height:100vh;background:radial-gradient(ellipse at center top,
  <div class="flash" id="flash"></div>
  </div>
  <div class="legend-update" aria-label="抽籤選項：Extension 1 by 橘色 22格、McDonald’s 10格、Go Again 10格、好啦! 橘色! 3格">
-  <span class="legend-chip option-yellow"><i></i>Extension 1 by 橘色 × 22</span>
-  <span class="legend-chip option-pink"><i></i>McDonald’s × 10</span>
-  <span class="legend-chip option-blue"><i></i>Go Again × 10</span>
-  <span class="legend-chip option-orange"><i></i>好啦! 橘色! × 3</span>
+  <span class="legend-chip option-yellow"><i></i><span class="legend-lines"><span class="legend-name">Extension 1 by 橘色</span><span class="legend-count">× 22</span></span></span>
+  <span class="legend-chip option-pink"><i></i><span class="legend-lines"><span class="legend-name">McDonald’s</span><span class="legend-count">× 10</span></span></span>
+  <span class="legend-chip option-blue"><i></i><span class="legend-lines"><span class="legend-name">Go Again</span><span class="legend-count">× 10</span></span></span>
+  <span class="legend-chip option-orange"><i></i><span class="legend-lines"><span class="legend-name">好啦! 橘色!</span><span class="legend-count">× 3</span></span></span>
 </div>
 <div class="badge" id="badge">✨ 讓生日命運幫你決定 ✨</div>
  <button class="cta-hotspot" id="bannerButton" aria-label="Try your luck，開始旋轉"></button>
