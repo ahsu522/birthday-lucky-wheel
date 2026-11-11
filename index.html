@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover"><meta name="theme-color" content="#07235c"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><title>生日大餐吃什麼？🎂 | Restaurant Lucky Wheel</title>
-<meta name="description" content="生日大餐吃什麼？轉動 45 格幸運轉盤，抽出今天的餐廳！">
+<meta name="description" content="生日大餐吃什麼？45 格幸運轉盤，手機音效修正版！"><meta name="app-version" content="2026-11-11-mobile-audio-v2">
 <style>
 :root {color-scheme:dark;--navy:#071b48;--blue:#0d3d89;--gold:#ffd852}
 *{box-sizing:border-box}
@@ -91,14 +91,14 @@ body{margin:0;min-height:100vh;background:radial-gradient(ellipse at center top,
  <div class="status" id="status" aria-live="polite">BIRTHDAY LUCKY DRAW</div>
  <div class="answer" id="answer">Ready? Let’s spin! 🎉</div>
  <div class="note" id="note">按 GO! 或 Try your luck 開始抽籤！</div>
- <div class="buttons"><button id="spin" class="button main">🎡 轉動命運轉盤</button><button id="shuffle" class="button other">🔀 重新洗牌</button><button id="sound" class="button sound" aria-pressed="true">🔊 音效開</button></div>
- <p class="explain">🍲 Extension 1 by 橘色 × 22　🍟 McDonald’s × 10　🔄 Go Again × 10　🧡 好啦! 橘色! × 3<br>一共 45 格，「好啦! 橘色!」穿插在涮涮鍋選項之間；抽到 Go Again 就再轉一次 😆</p>
+ <div class="buttons"><button id="spin" class="button main">🎡 轉動命運轉盤</button><button id="shuffle" class="button other">🔀 重新洗牌</button><button id="sound" class="button sound" aria-pressed="true">🔊 音效開</button><button id="testSound" class="button sound" type="button">🎵 試播音效</button></div>
+ <p class="explain">📱 手機第一次使用，先按「🎵 試播音效」啟用聲音；如仍無聲，請檢查手機靜音、音量與藍牙輸出。<br>🍲 Extension 1 by 橘色 × 22　🍟 McDonald’s × 10　🔄 Go Again × 10　🧡 好啦! 橘色! × 3<br>一共 45 格，「好啦! 橘色!」穿插在涮涮鍋選項之間；抽到 Go Again 就再轉一次 😆</p>
 </section></main>
 <script>
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const wheel=$('rotor'), g=$('sliceGroup'),spinButton=$('spin'),goButton=$('go'),bannerButton=$('bannerButton'),shuffleButton=$('shuffle'),soundButton=$('sound');
+const wheel=$('rotor'), g=$('sliceGroup'),spinButton=$('spin'),goButton=$('go'),bannerButton=$('bannerButton'),shuffleButton=$('shuffle'),soundButton=$('sound'),testSoundButton=$('testSound');
 const opts=[
 {label:'Extension 1 by 橘色',icon:'🍲',color:0,notes:['生日大餐就吃暖呼呼的涮涮鍋！','今天的幸運料理：涮涮鍋！']},
 {label:'McDonald’s',icon:'🍟',color:1,notes:['今天的生日快樂餐：McDonald’s！','薯條和漢堡正在等你！']},
@@ -138,23 +138,87 @@ function draw(){g.replaceChildren();for(let i=0;i<N;i++){
  make('text',{x:0,y:2,'font-family':'system-ui,-apple-system,sans-serif','font-size':v.color===3?19.5:20.5,'font-weight':'950','text-anchor':'middle','dominant-baseline':'middle',fill:v.color===3?'#733109':'#fff',stroke:v.color===3?'#ffffff55':'#31518b55','stroke-width':.5},group).textContent=v.label;
  }
  }}
-function beep(freq=580,time=.055,volume=.018){if(!soundOn)return;try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sine';osc.frequency.value=freq;gain.gain.setValueAtTime(volume,audioCtx.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+time);osc.connect(gain);gain.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+time+.005);}catch(e){}}
-function playWin(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.14,.055),i*105));}
-function ticks(){let t=0;for(let i=0;i<27;i++){const delay=70+i*8; t+=delay;setTimeout(()=>{if(busy)beep(700+(i%3)*105,.035,.018)},t);}}
+// Mobile Safari / Android unlock Web Audio only inside a real user gesture.
+// A one-frame silent buffer is started as part of the tap; all subsequent
+// wheel ticks can be played from scheduled callbacks after the context resumes.
+let audioUnavailable=false;
+function unlockAudio(){
+  if(!soundOn)return Promise.resolve(null);
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC){audioUnavailable=true;return Promise.resolve(null);}
+    if(!audioCtx||audioCtx.state==='closed')audioCtx=new AC();
+    if(audioCtx.state==='suspended'){
+      const silent=audioCtx.createBuffer(1,1,22050);
+      const src=audioCtx.createBufferSource();src.buffer=silent;
+      src.connect(audioCtx.destination);src.start(0);
+      return Promise.resolve(audioCtx.resume()).then(()=>audioCtx).catch(()=>null);
+    }
+    return Promise.resolve(audioCtx);
+  }catch(e){audioUnavailable=true;return Promise.resolve(null);}
+}
+function beep(freq=580,time=.075,volume=.10){
+  if(!soundOn||!audioCtx||audioCtx.state!=='running')return;
+  try{
+    const now=audioCtx.currentTime+.004;
+    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+    osc.type=freq>=620?'triangle':'sine';
+    osc.frequency.setValueAtTime(freq,now);
+    osc.frequency.exponentialRampToValueAtTime(Math.max(120,freq*.82),now+time);
+    gain.gain.setValueAtTime(.0001,now);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.002,volume),now+.006);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+time);
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.start(now);osc.stop(now+time+.015);
+    osc.onended=()=>{try{osc.disconnect();gain.disconnect()}catch(e){}};
+  }catch(e){}
+}
+function initialSound(freq=880,time=.11,volume=.105){
+  // Called synchronously from click handlers, so Safari grants activation.
+  unlockAudio().then(ctx=>{if(ctx&&soundOn)beep(freq,time,volume);});
+}
+function playWin(){
+  [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.22,.13),i*145));
+}
+function ticks(){
+  // Distinct, audible ratchet clicks that gradually slow down with the wheel.
+  let elapsed=0;
+  for(let i=0;i<35;i++){
+    elapsed+=58+i*5.3;
+    setTimeout(()=>{if(busy)beep(750+(i%4)*75,.055,.095);},elapsed);
+  }
+}
+function testAudio(){
+  soundOn=true;
+  soundButton.setAttribute('aria-pressed','true');
+  soundButton.textContent='🔊 音效開';
+  testSoundButton.textContent='🎵 試播音效';
+  unlockAudio().then(ctx=>{
+    if(!ctx||ctx.state!=='running'){
+      $('note').textContent='此瀏覽器尚未允許聲音，請用 Safari / Chrome 開啟並檢查手機音量。';
+      return;
+    }
+    beep(660,.095,.13);
+    setTimeout(()=>beep(880,.13,.14),125);
+    setTimeout(()=>beep(1100,.20,.14),275);
+    $('note').textContent='🔊 測試音效已播放！接著按 GO! 轉動轉盤 🎡';
+  });
+}
 function setBusy(value){busy=value;spinButton.disabled=value;goButton.disabled=value;bannerButton.disabled=value;shuffleButton.disabled=value;spinButton.textContent=value?'✨ 命運轉動中…':'🎡 再轉一次！';}
 function status(top,main,note){$('status').textContent=top;$('answer').textContent=main;$('note').textContent=note;}
 function confetti(){const c=$('confetti');c.replaceChildren();const colors=['#ffe25c','#79d5ff','#ff85b9','#fff','#a8f7d2'];for(let i=0;i<28;i++){const p=document.createElement('i');p.style.left=(Math.random()*95)+'%';p.style.background=colors[i%colors.length];p.style.animationDelay=(Math.random()*.5)+'s';p.style.setProperty('--dx',(Math.random()*140-70)+'px');c.appendChild(p);}setTimeout(()=>c.replaceChildren(),2800);}
-function result(index){const id=indices[index],item=opts[id],goAgain=id===2;setBusy(false);const text=item.icon+' '+item.label;status(goAgain?'OOPS! GO AGAIN!':'DESTINY HAS SPOKEN!',text,item.notes[spinCount%2]);$('revealCaption').textContent=goAgain?'🔄 ONE MORE TIME!':'🎂 BIRTHDAY LUCKY PICK!';$('revealName').textContent=text;$('revealNote').textContent=item.notes[spinCount%2];$('overlay').classList.add('open');$('flash').classList.remove('go');void $('flash').offsetWidth;$('flash').classList.add('go');if(!goAgain){confetti();playWin();}else{beep(370,.18,.05);setTimeout(()=>beep(530,.15,.055),130);}spinButton.textContent=goAgain?'🔄 Go Again！再轉！':'🎡 再轉一次！';}
-function spin(){if(busy)return;$('overlay').classList.remove('open');setBusy(true);spinCount++;status('SPINNING…','🎡 命運轉動中…','馬上揭曉生日大餐！');beep(870,.1,.035);ticks();
+function result(index){const id=indices[index],item=opts[id],goAgain=id===2;setBusy(false);const text=item.icon+' '+item.label;status(goAgain?'OOPS! GO AGAIN!':'DESTINY HAS SPOKEN!',text,item.notes[spinCount%2]);$('revealCaption').textContent=goAgain?'🔄 ONE MORE TIME!':'🎂 BIRTHDAY LUCKY PICK!';$('revealName').textContent=text;$('revealNote').textContent=item.notes[spinCount%2];$('overlay').classList.add('open');$('flash').classList.remove('go');void $('flash').offsetWidth;$('flash').classList.add('go');if(!goAgain){confetti();playWin();}else{beep(370,.20,.12);setTimeout(()=>beep(530,.18,.13),170);}spinButton.textContent=goAgain?'🔄 Go Again！再轉！':'🎡 再轉一次！';}
+function spin(){if(busy)return;$('overlay').classList.remove('open');setBusy(true);spinCount++;status('SPINNING…','🎡 命運轉動中…','馬上揭曉生日大餐！');initialSound(870,.12,.12);ticks();
  const idx=Math.floor(Math.random()*N), desired=((360-idx*STEP)%360+360)%360,old=((rotation%360)+360)%360,diff=(desired-old+360)%360;
  rotation+=360*(6+Math.floor(Math.random()*3))+diff;
  wheel.style.transition='transform 5.4s cubic-bezier(.09,.73,.12,1)';requestAnimationFrame(()=>requestAnimationFrame(()=>{wheel.style.transform=`rotate(${rotation}deg)`;}));
  clearTimeout(settleTimer);settleTimer=setTimeout(()=>result(idx),5490);
 }
-function reshuffle(){if(busy)return;$('overlay').classList.remove('open');wheel.style.transition='none';wheel.style.transform='rotate(0deg)';rotation=0;prepare();status('BIRTHDAY LUCKY DRAW','Ready? Let’s spin! 🎉','按 GO! 或 Try your luck 開始抽籤！');spinButton.textContent='🎡 轉動命運轉盤';beep(540,.09,.03);}
+function reshuffle(){if(busy)return;$('overlay').classList.remove('open');wheel.style.transition='none';wheel.style.transform='rotate(0deg)';rotation=0;prepare();status('BIRTHDAY LUCKY DRAW','Ready? Let’s spin! 🎉','按 GO! 或 Try your luck 開始抽籤！');spinButton.textContent='🎡 轉動命運轉盤';initialSound(540,.12,.11);}
 spinButton.addEventListener('click',spin);goButton.addEventListener('click',spin);bannerButton.addEventListener('click',spin);shuffleButton.addEventListener('click',reshuffle);
-soundButton.addEventListener('click',()=>{soundOn=!soundOn;soundButton.setAttribute('aria-pressed',String(soundOn));soundButton.textContent=soundOn?'🔊 音效開':'🔇 靜音';if(soundOn)beep(700,.09,.025);});
+soundButton.addEventListener('click',()=>{soundOn=!soundOn;soundButton.setAttribute('aria-pressed',String(soundOn));soundButton.textContent=soundOn?'🔊 音效開':'🔇 靜音';if(soundOn)initialSound(700,.12,.13);});
+testSoundButton.addEventListener('click',testAudio);
 prepare();
-window.__birthdayWheelDebug={get counts(){return [0,1,2,3].map(k=>indices.filter(v=>v===k).length)},get slots(){return [...indices]},get busy(){return busy},spin,reshuffle};
+window.__birthdayWheelDebug={get audioState(){return audioCtx?audioCtx.state:'not initialized'},get audioUnavailable(){return audioUnavailable},get counts(){return [0,1,2,3].map(k=>indices.filter(v=>v===k).length)},get slots(){return [...indices]},get busy(){return busy},spin,reshuffle};
 })();
 </script></body></html>
